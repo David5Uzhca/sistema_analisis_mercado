@@ -1,0 +1,62 @@
+<div class="inversion-main-container">
+    <h2>Inversión del Proyecto</h2>
+
+    <nav class="sub-tab-nav">
+        {% for label, slug in inversion_sub_tabs %}
+            <a href="{{ url_for('nuevo_caso', tab_name='inversion', sub_tab_name=slug) }}">
+                <button class="{% if sub_tab == slug %}active{% endif %}">
+                    {{ label }}
+                </button>
+            </a>
+        {% endfor %}
+    </nav>
+
+    <hr>
+    
+    <section class="inversion-sub-form">
+        {% if sub_tab == 'maquinarias' %}
+            {% include 'tabs/inversion/maquinarias.html' %}
+        {% elif sub_tab == 'diferida' %}
+            {% include 'tabs/inversion/diferida.html' %}
+        {% elif sub_tab == 'capital' %}
+            {% include 'tabs/inversion/capital.html' %}
+        {% elif sub_tab == 'energetico' %}
+            {% include 'tabs/inversion/energetico.html' %}
+        {% else %}
+            <p>Seleccione una categoría de inversión arriba.</p>
+        {% endif %}
+    </section>
+
+    <hr>
+
+    <section class="inversion-resumen-table">
+        <h3>Resumen Consolidado de Inversión</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Maquinarias y Equipos (Anexo 1)</td>
+                    <td>{{ "{:,.2f}".format(inversion_total_activos(caso.inversion)) }}</td> 
+                </tr>
+                <tr>
+                    <td>INVERSION DIFERIDA (Anexo 2)</td>
+                    <td>{{ "{:,.2f}".format(inversion_total_diferida(caso.inversion)) }}</td>
+                </tr>
+                <tr>
+                    <td>Capital de Trabajo (Anexo 3)</td>
+                    <td>{{ "{:,.2f}".format(inversion_total_capital_trabajo(caso.inversion)) }}</td> 
+                </tr>
+                <tr>
+                    <th>TOTAL INVERSIÓN INICIAL</th>
+                    <th>{{ "{:,.2f}".format(inversion_total_general(caso.inversion)) }}</th>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>

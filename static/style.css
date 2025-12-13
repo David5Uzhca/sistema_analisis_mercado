@@ -1,0 +1,324 @@
+/* ================================================= */
+/* 1. ESTILOS GENERALES Y LAYOUT BASE */
+/* ================================================= */
+
+:root {
+    --color-primary: #007bff; /* Azul primario para botones y acentos */
+    --color-secondary: #6c757d; /* Gris para bordes y texto secundario */
+    --color-success: #28a745; /* Verde para acciones de éxito */
+    --color-danger: #dc3545; /* Rojo para eliminar */
+    --color-light: #f8f9fa; /* Fondo claro */
+    --color-white: #ffffff;
+    --font-family: Arial, sans-serif;
+    --border-radius: 4px;
+    --spacing-md: 15px;
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-light);
+    color: #333;
+}
+
+main {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1, h2, h3, h4 {
+    color: #343a40;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 20px 0;
+}
+
+/* ----------------------------------------------- */
+/* 2. ENCABEZADO Y NAVEGACIÓN PRINCIPAL (Dashboard) */
+/* ----------------------------------------------- */
+
+header {
+    background-color: var(--color-white);
+    padding: var(--spacing-md) 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 1.8em;
+    color: var(--color-primary);
+}
+
+header nav a {
+    color: var(--color-secondary);
+    text-decoration: none;
+    margin-left: var(--spacing-md);
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+header nav a:hover {
+    color: var(--color-primary);
+}
+
+/* ----------------------------------------------- */
+/* 3. POP-UP DE INICIO DE CASO */
+/* ----------------------------------------------- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--color-white);
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-content input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0 20px 0;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+}
+
+/* ----------------------------------------------- */
+/* 4. LAYOUT Y BOTONES DEL CASO (Nuevo Caso) */
+/* ----------------------------------------------- */
+
+.caso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.caso-header h2 {
+    font-size: 1.5em;
+    margin-right: 20px;
+}
+
+.caso-header p {
+    color: var(--color-secondary);
+    font-size: 0.9em;
+    flex-grow: 1;
+}
+
+.caso-header button {
+    background-color: var(--color-danger);
+    color: var(--color-white);
+    padding: 8px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ----------------------------------------------- */
+/* 5. NAVEGACIÓN DE PESTAÑAS (Tabs) */
+/* ----------------------------------------------- */
+
+/* NAV PRINCIPAL DE 18 PESTAÑAS (Nuevo Caso) */
+.tab-nav {
+    display: flex;
+    overflow-x: auto; /* Permite desplazamiento horizontal para muchas pestañas */
+    padding: 0;
+    margin-bottom: var(--spacing-md);
+    white-space: nowrap;
+    border-bottom: 2px solid #ccc;
+}
+
+.tab-nav a {
+    text-decoration: none;
+}
+
+.tab-nav button {
+    background: var(--color-light);
+    border: 1px solid #ccc;
+    border-bottom: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    margin-right: 2px;
+    transition: background-color 0.3s, color 0.3s;
+    white-space: nowrap;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+    font-size: 0.9em;
+}
+
+.tab-nav button:hover {
+    background-color: #e9ecef;
+}
+
+.tab-nav button.active {
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
+    position: relative;
+    z-index: 10;
+}
+
+.tab-content {
+    padding: var(--spacing-md);
+    background: var(--color-white);
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* ----------------------------------------------- */
+/* 6. SUB-NAVEGACIÓN DE INVERSIÓN (Anexos 1-4) */
+/* ----------------------------------------------- */
+
+.sub-tab-nav {
+    display: flex;
+    padding: 10px 0;
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid #eee;
+}
+
+.sub-tab-nav button {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    margin-right: 10px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sub-tab-nav button.active {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+}
+
+/* ----------------------------------------------- */
+/* 7. FORMULARIOS (Proyección, Maquinarias, etc.) */
+/* ----------------------------------------------- */
+
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eee;
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+input[type="text"], 
+input[type="number"],
+textarea {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+}
+
+button[type="submit"], 
+.btn-agregar,
+.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"]:hover, 
+.btn-agregar:hover,
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* ----------------------------------------------- */
+/* 8. ESTILOS DE TABLAS */
+/* ----------------------------------------------- */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-md);
+    font-size: 0.9em;
+    table-layout: auto;
+}
+
+table th, table td {
+    padding: 10px 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+table thead th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #495057;
+    text-align: center;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+table tfoot th, table tfoot td {
+    background-color: #dee2e6;
+    font-weight: bold;
+    border-top: 2px solid var(--color-secondary);
+}
+
+/* Botones de acción en tabla (eliminar) */
+table button {
+    background: var(--color-danger);
+    color: var(--color-white);
+    border: none;
+    padding: 5px 8px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+/* Ajustes específicos de las tablas de inversión */
+.inversion-sub-form h4 {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}

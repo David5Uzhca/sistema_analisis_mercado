@@ -1,0 +1,49 @@
+<h3>Anexo 2: Inversión Diferida (Activos Intangibles)</h3>
+<p>Formulario para registrar costos pre-operativos y de instalación.</p>
+
+<form action="{{ url_for('guardar_diferida') }}" method="post" id="form-diferida">
+    <h4>Agregar Ítem Diferido</h4>
+    
+    <input type="text" name="descripcion" placeholder="Descripción (Ej. Gastos de constitución)" required>
+    <input type="number" name="valor_unitario" placeholder="Valor Unitario ($)" min="0" required>
+    <input type="number" name="cantidad" placeholder="Cantidad" min="1" required>
+    <input type="text" name="comentario" placeholder="Comentario">
+
+    <button type="submit" class="btn-agregar">➕ Agregar Ítem Diferido</button>
+</form>
+
+<hr>
+
+<h4>Ítems Registrados</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Descripción</th>
+            <th>Valor Unitario</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Comentario</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in caso.inversion.inversion_diferida %}
+            <tr>
+                <td>{{ item.descripcion }}</td>
+                <td>{{ "{:,.2f}".format(item.valor_unitario) }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ "{:,.2f}".format(item.total) }}</td>
+                <td>{{ item.comentario }}</td>
+                <td><button onclick="alert('Función de eliminar pendiente')">🗑️</button></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">No hay ítems de inversión diferida registrados.</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th colspan="3" style="text-align: right;">TOTAL INVERSIÓN DIFERIDA:</th>
+            <th colspan="3">{{ "{:,.2f}".format(inversion_total_diferida(caso.inversion)) }}</th>
+        </tr>
+    </tfoot>
+</table>

@@ -1,0 +1,126 @@
+<div class="rol-pagos-container">
+    <h2>Rol de Pagos</h2>
+
+    <form action="{{ url_for('guardar_rol_config') }}" method="post" class="proyeccion-config-form">
+        <h4>Configuración de Proyección</h4>
+        <div class="form-group">
+            <label for="num_proyeccion_rol">Años de Proyección (Rol):</label>
+            <input 
+                id="num_proyeccion_rol" 
+                type="number" 
+                name="num_proyeccion_rol" 
+                value="{{ caso.proyeccion.num_proyeccion }}" 
+                min="1" 
+                max="20"
+                required
+            />
+        </div>
+        <button type="submit" class="btn-primary">Actualizar Años</button>
+    </form>
+    
+    <hr>
+
+    <form action="{{ url_for('guardar_rol_cargo') }}" method="post" class="rol-pagos-form">
+        <h4>Añadir Nuevo Cargo a la Nómina</h4>
+        
+        <div class="form-group"><label>Cargo</label><input type="text" name="cargo" required></div>
+        <div class="form-group"><label>Sueldo nominal ($)</label><input type="number" name="sueldo_nominal" min="0" required></div>
+        <div class="form-group"><label>Días trabajado</label><input type="number" name="dias_trabajados" min="1" max="30" required></div>
+        
+        <div class="form-group"><label>Valor HE ($)</label><input type="number" name="no_he" min="0"></div>
+        <div class="form-group"><label>Valor HS ($)</label><input type="number" name="no_hs" min="0"></div>
+        <div class="form-group"><label>Valor JN ($)</label><input type="number" name="no_jn" min="0"></div>
+        
+        <div class="form-group"><label>Comisiones ($)</label><input type="number" name="comisiones" min="0"></div>
+        <div class="form-group"><label>Anticipos ($)</label><input type="number" name="anticipos" min="0"></div>
+        <div class="form-group"><label>Descuentos ($)</label><input type="number" name="descuentos" min="0"></div>
+        <div class="form-group"><label>Quincenas ($)</label><input type="number" name="quincenas" min="0"></div>
+        
+        <button type="submit" class="btn-agregar">➕ Agregar Cargo</button>
+    </form>
+
+    <hr>
+    
+    {% for anio_rol in caso.rol_pagos.proyeccion_anual %}
+        <h3>Rol de Pagos - Año {{ loop.index }}</h3>
+        <div class="rol-pagos-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cargo</th>
+                        <th>Sueldo nominal</th>
+                        <th>Días trabajado</th>
+                        <th>Sueldo</th>
+                        <th>No.HE</th>
+                        <th>Horas Ext.</th>
+                        <th>No. HS</th>
+                        <th>Horas Sup.</th>
+                        <th>No. JN</th>
+                        <th>Jornada Noct.</th>
+                        <th>Comisiones</th>
+                        <th>Remuneracion</th>
+                        <th>Décimo Tercer S.</th>
+                        <th>Décimo Cuarto S.</th>
+                        <th>Fondos de Reserva</th>
+                        <th>TOTAL INGRESOS</th>
+                        <th>AP. Personal</th>
+                        <th>Anticipos</th>
+                        <th>Descuentos</th>
+                        <th>Quincenas</th>
+                        <th>L. Recibir</th>
+                        <th>AP. Patronal</th>
+                        <th>Vacaciones</th>
+                        <th>PAGO EMPLEADOR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in anio_rol.items %}
+                        <tr>
+                            <td>{{ item.cargo }}</td>
+                            <td>{{ "{:,.2f}".format(item.sueldo_nominal) }}</td>
+                            <td>{{ item.dias_trabajados }}</td>
+                            <td>{{ "{:,.2f}".format(item.sueldo) }}</td>
+                            <td>{{ item.no_he }}</td>
+                            <td>{{ "{:,.2f}".format(item.no_he) }}</td> <td>{{ item.no_hs }}</td>
+                            <td>{{ "{:,.2f}".format(item.no_hs) }}</td>
+                            <td>{{ item.no_jn }}</td>
+                            <td>{{ "{:,.2f}".format(item.no_jn) }}</td>
+                            <td>{{ "{:,.2f}".format(item.comisiones) }}</td>
+                            <td>{{ "{:,.2f}".format(item.remuneracion) }}</td>
+                            <td>{{ "{:,.2f}".format(item.decimo_tercer_sueldo) }}</td>
+                            <td>{{ "{:,.2f}".format(item.decimo_cuarto_sueldo) }}</td>
+                            <td>{{ "{:,.2f}".format(item.fondos_reserva) }}</td>
+                            <td>{{ "{:,.2f}".format(item.total_ingresos) }}</td>
+                            <td>{{ "{:,.2f}".format(item.ap_personal) }}</td>
+                            <td>{{ "{:,.2f}".format(item.anticipos) }}</td>
+                            <td>{{ "{:,.2f}".format(item.descuentos) }}</td>
+                            <td>{{ "{:,.2f}".format(item.quincenas) }}</td>
+                            <td>{{ "{:,.2f}".format(item.l_recibir) }}</td>
+                            <td>{{ "{:,.2f}".format(item.ap_patronal) }}</td>
+                            <td>{{ "{:,.2f}".format(item.vacaciones) }}</td>
+                            <td>{{ "{:,.2f}".format(item.pago_empleador) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    {% set ns = namespace(total_mes=0) %}
+                    {% for item in anio_rol.items %}
+                        {% set ns.total_mes = ns.total_mes + item.pago_empleador %}
+                    {% endfor %}
+                    <tr>
+                        <th colspan="23" style="text-align: right;">Total Mes (Suma de Pago Empleador):</th>
+                        <th>{{ "{:,.2f}".format(ns.total_mes) }}</th>
+                    </tr>
+                    <tr>
+                        <th colspan="23" style="text-align: right;">Total Año {{ loop.index }}:</th>
+                        
+                        <th>{{ "{:,.2f}".format(ns.total_mes * 12) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% else %}
+        <p>Agregue un nuevo cargo para comenzar el cálculo del Rol de Pagos.</p>
+    {% endfor %}
+    
+</div>

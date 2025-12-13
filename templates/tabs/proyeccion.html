@@ -1,0 +1,122 @@
+<div class="proyeccion-container">
+    <h2>Proyección de la Demanda</h2>
+
+    <form action="{{ url_for('guardar_proyeccion') }}" method="post">
+        
+        {% set p = caso.proyeccion %} 
+        
+        <div class="form-group">
+            <label for="demandaInicial">Según estudio de mercado (Demanda Inicial):</label>
+            <input 
+                id="demandaInicial" 
+                type="number" 
+                name="demanda_inicial" 
+                value="{{ p.demanda_inicial }}" 
+                required
+            />
+        </div>
+
+        <div class="form-group">
+            <label for="tasaCrecimiento">Crecimiento industria de señalización digital (%):</label>
+            <input 
+                id="tasaCrecimiento" 
+                type="number" 
+                step="0.01"
+                name="tasa_crecimiento" 
+                value="{{ p.tasa_crecimiento }}" 
+                required
+            />
+        </div>
+        
+        <div class="form-group">
+            <label for="proyeccionAnos">Proyección (Años):</label>
+            <input 
+                id="proyeccionAnos" 
+                type="number" 
+                name="num_proyeccion" 
+                value="{{ p.num_proyeccion }}" 
+                min="1"
+                max="20"
+                required
+                style="width: 100px;" 
+            />
+        </div>
+    </form>
+
+    <hr>
+    <h3>Resultados de la Proyección Anual</h3>
+
+        <div class="proyeccion-resultados-table">
+        
+            {% if p.resultados_proyeccion %}
+                <table>
+                    <thead>
+                        <tr>
+                            {% for i in range(p.num_proyeccion) %}
+                                <th>Año {{ i + 1 }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for resultado in p.resultados_proyeccion %}
+                                <td>{{ "{:,.0f}".format(resultado) }}</td> {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Ingrese la Demanda Inicial, la Tasa de Crecimiento y la Proyección de Años.</p>
+            {% endif %}
+
+</div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('.proyeccion-container form');
+        const resultadosContainer = document.querySelector('.proyeccion-resultados-table');
+        function autoGuardarYCalcular() {
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData // Envía los datos del formulario
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    actualizarTabla(data.resultados, data.num_proyeccion);
+                    console.log('Proyección actualizada y guardada.');
+                } else {
+                    alert('Error al calcular: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+                alert('Ocurrió un error de conexión al guardar.');
+            });
+        }
+
+        form.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', autoGuardarYCalcular);
+        });
+
+        function actualizarTabla(resultados, numAnos) {
+            let htmlContent = '<table><thead><tr>';
+            for (let i = 1; i <= numAnos; i++) {
+                htmlContent += `<th>Año ${i}</th>`;
+            }
+            htmlContent += '</tr></thead><tbody><tr>';
+            resultados.forEach(res => {
+                const valorFormateado = res.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                htmlContent += `<td>${valorFormateado}</td>`;
+            });
+            
+            htmlContent += '</tr></tbody></table>';
+            
+            resultadosContainer.innerHTML = htmlContent;
+        }
+
+    });
+</script>
