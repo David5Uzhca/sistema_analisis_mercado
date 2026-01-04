@@ -25,17 +25,36 @@ def calcular_proyeccion(datos: DatosProyeccion) -> List[int]:
         
     return resultados
 
-def inversion_total_activos(datos_inversion: DatosInversion) -> float:
+
+
+
+def inversion_total_activos_dev(datos_inversion: DatosInversion) -> float:
     """Calcula el costo total de los activos fijos."""
     return sum(activo.valor_total for activo in datos_inversion.activos_fijos)
 
-def inversion_total_diferida(datos_inversion: DatosInversion) -> float:
+def inversion_total_diferida_dev(datos_inversion: DatosInversion) -> float:
     """Calcula el costo total de la inversión diferida (sumando total)."""
     return sum(item.total for item in datos_inversion.inversion_diferida)
 
-def inversion_total_capital_trabajo(datos_inversion: DatosInversion) -> float:
+def inversion_total_capital_trabajo_dev(datos_inversion: DatosInversion) -> float:
     """Calcula el total del Capital de Trabajo sumando los totales de los ítems."""
     return sum(item.total for item in datos_inversion.capital_trabajo_items)
+
+
+
+
+def inversion_total_activos(datos_inversion):
+    return sum(item.valor_total for item in datos_inversion.activos_fijos)
+
+def inversion_total_diferida(datos_inversion):
+    return sum(item.total for item in datos_inversion.inversion_diferida)
+
+def inversion_total_capital_trabajo(datos_inversion):
+    return sum(item.total for item in datos_inversion.capital_trabajo_items)
+
+
+
+
 
 def inversion_total_general(datos_inversion: DatosInversion) -> float:
     """Calcula la inversión inicial total (Fijos + Diferida + Capital)."""
@@ -44,6 +63,14 @@ def inversion_total_general(datos_inversion: DatosInversion) -> float:
     total_capital = inversion_total_capital_trabajo(datos_inversion) 
     return total_fijos + total_diferida + total_capital
 
-def sincronizar_total_capital_trabajo(datos_inversion: DatosInversion):
+def sincronizar_total_capital_trabajo_dev(datos_inversion: DatosInversion):
     """Sincroniza el campo antiguo 'capital_trabajo' con el total calculado de ítems."""
     datos_inversion.capital_trabajo = inversion_total_capital_trabajo(datos_inversion)
+
+def sincronizar_total_capital_trabajo(datos_inversion):
+    """Sincroniza el campo antiguo 'capital_trabajo' con el total de la lista de ítems."""
+    # Suma el campo 'total' de cada ítem en la lista
+    total_calculado = sum(item.total for item in datos_inversion.capital_trabajo_items)
+    # Actualiza el atributo float para mantener compatibilidad con otras pestañas
+    datos_inversion.capital_trabajo = total_calculado
+    return total_calculado

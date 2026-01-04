@@ -70,6 +70,26 @@ class CapitalTrabajoItem:
 
 
 @dataclass
+class RegistroConsumoMensual:
+    consumo_kwh: float = 0.0
+    costo_usd: float = 0.0  # Calculado: consumo_kwh * 100
+
+
+@dataclass
+class RegistroConsumoDiario:
+    consumo_diario: float = 0.0
+    anual: float = 0.0       # Calculado: consumo_diario * 365
+    costo_kwh: float = 0.0
+    total: float = 0.0       # Calculado: anual * costo_kwh
+
+
+@dataclass
+class DatosFinanciamiento:
+    porcentaje_propio: float = 0.0
+    porcentaje_externo: float = 0.0
+
+
+@dataclass
 class DatosInversion:
     activos_fijos: List[ActivoFijo] = field(default_factory=list) 
     inversion_diferida: List[InversionDiferidaItem] = field(default_factory=list)
@@ -77,6 +97,8 @@ class DatosInversion:
     analisis_energetico: List[AnalisisEnergeticoItem] = field(default_factory=list)
     capital_trabajo: float = 0.0
     capital_trabajo_items: List[CapitalTrabajoItem] = field(default_factory=list)
+    consumos_mensuales: List[RegistroConsumoMensual] = field(default_factory=list)
+    consumos_diarios: List[RegistroConsumoDiario] = field(default_factory=list)
 
 
 @dataclass
@@ -86,6 +108,7 @@ class Caso:
     proyeccion: DatosProyeccion = field(default_factory=DatosProyeccion)
     inversion: DatosInversion = field(default_factory=DatosInversion)
     rol_pagos: 'DatosRolPagos' = field(default_factory=lambda: DatosRolPagos())
+    financiamiento: DatosFinanciamiento = field(default_factory=DatosFinanciamiento)
 
 
 @dataclass

@@ -1,0 +1,135 @@
+<div class="financiamiento-container">
+    <h3>Estructura de Financiamiento</h3>
+
+    <div class="financiamiento-config" style="margin-bottom: 20px; display: flex; gap: 20px;">
+        <div>
+            <label>Aporte Propio (%):</label>
+            <input type="number" id="input-propio" value="{{ caso.financiamiento.porcentaje_propio }}" min="0" max="100">
+        </div>
+        <div>
+            <label>Aporte Externo (%):</label>
+            <input type="text" id="input-externo" value="{{ caso.financiamiento.porcentaje_externo }}" readonly>
+        </div>
+    </div>
+
+    <table id="tabla-financiamiento">
+        <thead>
+            <tr>
+                <th>INVERSION</th>
+                <th>VALOR</th>
+                <th>APORTE PROPIO</th>
+                <th>APORTE EXTERNO</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="header-row" style="background: #f0f0f0; font-weight: bold;">
+                <td>Maquinarias y Equipos (Anexo 1)</td>
+                <td class="subtotal-base">{{ "{:,.2f}".format(inversion_total_activos(caso.inversion)) }}</td>
+                <td class="subtotal-propio">0.00</td>
+                <td class="subtotal-externo">0.00</td>
+            </tr>
+            {% for item in caso.inversion.activos_fijos %}
+            <tr>
+                <td style="padding-left: 20px;">{{ item.descripcion }}</td>
+                <td class="valor-base" data-valor="{{ item.valor_total }}">{{ "{:,.2f}".format(item.valor_total) }}</td>
+                <td class="calc-propio">0.00</td>
+                <td class="calc-externo">0.00</td>
+            </tr>
+            {% endfor %}
+
+            <tr class="header-row" style="background: #f0f0f0; font-weight: bold;">
+                <td>INVERSION DIFERIDA (Anexo 2)</td>
+                <td class="subtotal-base">{{ "{:,.2f}".format(inversion_total_diferida(caso.inversion)) }}</td>
+                <td class="subtotal-propio">0.00</td>
+                <td class="subtotal-externo">0.00</td>
+            </tr>
+            {% for item in caso.inversion.inversion_diferida %}
+            <tr>
+                <td style="padding-left: 20px;">{{ item.descripcion }}</td>
+                <td class="valor-base" data-valor="{{ item.total }}">{{ "{:,.2f}".format(item.total) }}</td>
+                <td class="calc-propio">0.00</td>
+                <td class="calc-externo">0.00</td>
+            </tr>
+            {% endfor %}
+
+            <tr class="header-row" style="background: #f0f0f0; font-weight: bold;">
+                <td>Capital de Trabajo (Anexo 3)</td>
+                <td class="subtotal-base">{{ "{:,.2f}".format(inversion_total_capital_trabajo(caso.inversion)) }}</td>
+                <td class="subtotal-propio">0.00</td>
+                <td class="subtotal-externo">0.00</td>
+            </tr>
+            {% for item in caso.inversion.capital_trabajo_items %}
+            <tr>
+                <td style="padding-left: 20px;">{{ item.descripcion }}</td>
+                <td class="valor-base" data-valor="{{ item.total }}">{{ "{:,.2f}".format(item.total) }}</td>
+                <td class="calc-propio">0.00</td>
+                <td class="calc-externo">0.00</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot style="background: #dee2e6;">
+            <tr>
+                <th colspan="2" style="text-align: right;">TOTAL PROPIO:</th>
+                <th id="gran-total-propio">$0.00</th>
+                <th></th>
+            </tr>
+            <tr>
+                <th colspan="2" style="text-align: right;">TOTAL EXTERNO:</th>
+                <th></th>
+                <th id="gran-total-externo">$0.00</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<script>
+const inputPropio = document.getElementById('input-propio');
+const inputExterno = document.getElementById('input-externo');
+
+function calcularYGuardar() {
+    const propioPercent = parseFloat(inputPropio.value) || 0;
+    const externoPercent = 100 - propioPercent;
+    inputExterno.value = externoPercent.toFixed(2);
+
+    let granSumaPropio = 0;
+    let granSumaExterno = 0;
+
+    // 1. Recorrer filas de datos
+    document.querySelectorAll('#tabla-financiamiento tbody tr').forEach(row => {
+        const valorBaseElem = row.querySelector('.valor-base');
+        const subtotalBaseElem = row.querySelector('.subtotal-base');
+
+        if (valorBaseElem) {
+            const base = parseFloat(valorBaseElem.dataset.valor);
+            const pVal = base * (propioPercent / 100);
+            const eVal = base * (externoPercent / 100);
+            
+            row.querySelector('.calc-propio').textContent = pVal.toLocaleString('en-US', {minimumFractionDigits: 2});
+            row.querySelector('.calc-externo').textContent = eVal.toLocaleString('en-US', {minimumFractionDigits: 2});
+            
+            granSumaPropio += pVal;
+            granSumaExterno += eVal;
+        }
+
+        // 2. Calcular también para las filas de encabezado (Marca Azul)
+        if (subtotalBaseElem) {
+            const baseSub = parseFloat(subtotalBaseElem.textContent.replace(/,/g, ''));
+            row.querySelector('.subtotal-propio').textContent = (baseSub * (propioPercent / 100)).toLocaleString('en-US', {minimumFractionDigits: 2});
+            row.querySelector('.subtotal-externo').textContent = (baseSub * (externoPercent / 100)).toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+    });
+
+    document.getElementById('gran-total-propio').textContent = '$' + granSumaPropio.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById('gran-total-externo').textContent = '$' + granSumaExterno.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+    // 3. Guardado Automático en el servidor
+    fetch('/api/guardar-porcentaje-financiamiento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propio: propioPercent })
+    });
+}
+
+inputPropio.addEventListener('input', calcularYGuardar);
+window.addEventListener('load', calcularYGuardar); // Ejecutar al cargar para mostrar valores actuales
+</script>

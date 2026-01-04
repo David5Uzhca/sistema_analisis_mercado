@@ -5,12 +5,12 @@ from flask import (
 from core.case_manager import manager 
 from core.models import (
     DatosProyeccion, ActivoFijo, InversionDiferidaItem, 
-    CapitalTrabajoItem, ItemRolPagos, AnioRolPagos
+    CapitalTrabajoItem, ItemRolPagos, AnioRolPagos, RegistroConsumoDiario, RegistroConsumoMensual, DatosFinanciamiento
 )
 from core.calculations import (
     calcular_proyeccion, inversion_total_activos, 
     inversion_total_diferida, inversion_total_capital_trabajo, 
-    inversion_total_general
+    inversion_total_general, sincronizar_total_capital_trabajo
 )
 
 import copy
@@ -268,14 +268,10 @@ def guardar_rol_config():
         num_proyeccion_rol = int(request.form.get('num_proyeccion_rol', 5))
         if num_proyeccion_rol < 1 or num_proyeccion_rol > 20: 
              abort(400, description="El número de años debe estar entre 1 y 20.")
-             
-        # Actualizamos el valor principal de proyección
         caso.proyeccion.num_proyeccion = num_proyeccion_rol
         
     except ValueError:
         abort(400, description="Dato de años inválido.")
-
-    # Reconstruir la proyección del rol para que se muestren las N tablas
     regenerar_proyeccion_rol(caso)
     
     return redirect(url_for('nuevo_caso', tab_name='rol-pagos'))
@@ -298,27 +294,91 @@ def guardar_rol_cargo():
             descuentos=float(request.form.get('descuentos', 0)),
             quincenas=float(request.form.get('quincenas', 0))
         )
-        # El cálculo inicial se hace dentro de la validación, pero la proyección lo recalculará
         nuevo_cargo.calcular_rol() 
 
     except ValueError:
         abort(400, description="Datos numéricos inválidos en el formulario de Rol de Pagos.")
-        
-    # 1. Obtener la lista de cargos BASE actual (usando el primer año si existe, o una nueva)
     if not caso.rol_pagos.proyeccion_anual:
         caso.rol_pagos.proyeccion_anual.append(AnioRolPagos())
-        
-    # 2. Añadir el nuevo cargo al Año 1 (nuestra lista base)
-    caso.rol_pagos.proyeccion_anual[0].items.append(nuevo_cargo) 
-    
-    # 3. Reconstruir toda la proyección para N años, aplicando el incremento
+    caso.rol_pagos.proyeccion_anual[0].items.append(nuevo_cargo)
     regenerar_proyeccion_rol(caso)
     
     return redirect(url_for('nuevo_caso', tab_name='rol-pagos'))
 
 
+@app.route('/api/guardar-consumo-mensual', methods=['POST'])
+def guardar_consumo_mensual():
+    caso = validar_caso_activo()
+    try:
+        consumo = float(request.form.get('consumo_kwh', 0))
+        nuevo_registro = RegistroConsumoMensual(
+            consumo_kwh=consumo,
+            costo_usd=consumo * 100
+        )
+        caso.inversion.consumos_mensuales.append(nuevo_registro)
+        
+        # Sincronización automática con Capital de Trabajo (Anexo 3)
+        if len(caso.inversion.consumos_mensuales) == 1:
+            item_electrico = CapitalTrabajoItem(
+                descripcion="Consumo electrico",
+                valor_unitario=nuevo_registro.costo_usd,
+                cantidad=1
+            )
+            item_electrico.calcular_total()
+            caso.inversion.capital_trabajo_items.append(item_electrico)
+            sincronizar_total_capital_trabajo(caso.inversion)
+
+    except ValueError:
+        abort(400, description="Valores numéricos inválidos")
+    return redirect(url_for('nuevo_caso', tab_name='inversion', sub_tab_name='energetico'))
 
 
+@app.route('/api/guardar-consumo-diario', methods=['POST'])
+def guardar_consumo_diario():
+    caso = validar_caso_activo()
+    try:
+        diario = float(request.form.get('consumo_diario', 0))
+        costo_unitario = float(request.form.get('costo_kwh', 0))
+        anual = diario * 365
+        
+        nuevo_registro = RegistroConsumoDiario(
+            consumo_diario=diario,
+            anual=anual,
+            costo_kwh=costo_unitario,
+            total=anual * costo_unitario
+        )
+        caso.inversion.consumos_diarios.append(nuevo_registro)
+    except ValueError:
+        abort(400, description="Valores numéricos inválidos")
+    return redirect(url_for('nuevo_caso', tab_name='inversion', sub_tab_name='energetico'))
+
+
+@app.route('/api/actualizar-financiamiento', methods=['POST'])
+def actualizar_financiamiento():
+    caso = validar_caso_activo()
+    data = request.get_json()
+    caso.financiamiento.porcentaje_propio = float(data.get('propio', 75))
+    caso.financiamiento.porcentaje_externo = 100 - caso.financiamiento.porcentaje_propio
+    return jsonify({
+        'propio': caso.financiamiento.porcentaje_propio,
+        'externo': caso.financiamiento.porcentaje_externo
+    })
+
+
+@app.route('/api/guardar-porcentaje-financiamiento', methods=['POST'])
+def guardar_porcentaje():
+    caso = validar_caso_activo()
+    data = request.get_json()
+    
+    try:
+        propio = float(data.get('propio', 75))
+        caso.financiamiento.porcentaje_propio = propio
+        caso.financiamiento.porcentaje_externo = 100 - propio
+        return jsonify({'success': True})
+    except ValueError:
+        return jsonify({'success': False}), 400
+
+        
 # -------------------------------------------------------------------
 # FIN DEL ARCHIVO
 # -------------------------------------------------------------------
