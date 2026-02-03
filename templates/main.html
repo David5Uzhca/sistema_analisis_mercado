@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mercuriOS - Análisis de Proyectos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <header>
         <h1>mercuriOS</h1>
         <nav>
-            <a href="{{ url_for('nuevo_caso') }}">Nuevo Caso</a> | 
+            <a href="{{ url_for('nuevo_caso') }}">Nuevo Caso</a> |
             <a href="/reporte">Reporte</a>
         </nav>
     </header>
 
     <main>
-        <h2>Bienvenido a tu Aplicación Local</h2>
-        <p>Utilice la barra de navegación superior para comenzar un análisis o revisar un caso guardado.</p>
+        </div>
+        <div style="text-align: center; margin-top: 50px;">
+            <h2>Bienvenido a mercuriOS</h2>
+            <p>Seleccione "Nuevo Caso" para comenzar o "Reporte" para ver sus proyectos guardados.</p>
+        </div>
     </main>
 </body>
+
 </html>

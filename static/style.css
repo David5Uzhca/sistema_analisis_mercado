@@ -146,7 +146,7 @@ header nav a:hover {
 /* NAV PRINCIPAL DE 18 PESTAÑAS (Nuevo Caso) */
 .tab-nav {
     display: flex;
-    overflow-x: auto; /* Permite desplazamiento horizontal para muchas pestañas */
+    overflow-x: auto;
     padding: 0;
     margin-bottom: var(--spacing-md);
     white-space: nowrap;

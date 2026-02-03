@@ -5,7 +5,7 @@ from flask import (
 from core.case_manager import manager 
 from core.models import (
     DatosProyeccion, ActivoFijo, InversionDiferidaItem, 
-    CapitalTrabajoItem, ItemRolPagos, AnioRolPagos, RegistroConsumoDiario, RegistroConsumoMensual, DatosFinanciamiento
+    CapitalTrabajoItem, ItemRolPagos, AnioRolPagos, RegistroConsumoDiario, RegistroConsumoMensual, DatosFinanciamiento, ItemWacc, DatosWacc, DatosAmortizacion
 )
 from core.calculations import (
     calcular_proyeccion, inversion_total_activos, 
@@ -38,6 +38,19 @@ def index():
     """Ruta del Dashboard/Página Inicial."""
     return render_template('main.html')
 
+@app.route('/cerrar-caso')
+def cerrar_caso():
+    """Cierra el caso en memoria para permitir iniciar uno nuevo."""
+    manager.cerrar_caso_actual()
+    session.pop('needs_name', None)
+    return redirect(url_for('index'))
+
+@app.route('/reporte')
+def reporte():
+    """Lista los proyectos guardados."""
+    casos = manager.listar_casos()
+    return render_template('reporte.html', casos=casos)
+
 @app.route('/nuevo-caso/<tab_name>', defaults={'sub_tab_name': None})
 @app.route('/nuevo-caso', defaults={'tab_name': 'proyeccion', 'sub_tab_name': None})
 @app.route('/nuevo-caso/<tab_name>/<sub_tab_name>')
@@ -53,6 +66,9 @@ def nuevo_caso(tab_name: str, sub_tab_name: str):
     if not caso:
         session['needs_name'] = True
         return render_template('nuevo_caso.html', caso=None, tabs=[], active_tab=tab_name)
+    
+    # Si hay caso activo, aseguramos que no se pida nombre
+    session.pop('needs_name', None)
     
     tabs = [
         ("Proyeccion", "proyeccion"), ("Inversion", "inversion"), ("Financiamiento", "financiamiento"), 
@@ -108,6 +124,23 @@ def validar_caso_activo():
     if not caso:
         abort(400, description="No hay caso activo. Por favor, inicie uno.")
     return caso
+
+
+@app.route('/guardar-caso', methods=['POST', 'GET'])
+def guardar_caso():
+    """Guarda el estado actual del caso en disco."""
+    success, result = manager.guardar_caso_actual()
+    if success:
+        return redirect(url_for('nuevo_caso', tab_name='proyeccion'))
+    return f"Error al guardar: {result}", 500
+
+
+@app.route('/cargar-caso/<filename>')
+def cargar_caso(filename):
+    """Carga un caso desde el disco y lo establece como activo."""
+    if manager.cargar_caso_desde_archivo(filename):
+        return redirect(url_for('nuevo_caso', tab_name='proyeccion'))
+    return "Error al cargar el archivo. Puede estar corrupto o no existir.", 400
 
 
 def regenerar_proyeccion_rol(caso):
@@ -179,7 +212,8 @@ def guardar_maquinarias():
     
     if nuevo_activo.descripcion:
         caso.inversion.activos_fijos.append(nuevo_activo)
-        
+    
+    manager.guardar_caso_actual() # Autosave
     return redirect(url_for('nuevo_caso', tab_name='inversion', sub_tab_name='maquinarias'))
 
 
@@ -203,6 +237,7 @@ def guardar_diferida():
     if nuevo_item_diferido.descripcion:
         caso.inversion.inversion_diferida.append(nuevo_item_diferido)
     
+    manager.guardar_caso_actual() # Autosave
     return redirect(url_for('nuevo_caso', tab_name='inversion', sub_tab_name='diferida'))
 
 
@@ -225,6 +260,7 @@ def guardar_capital():
     if nuevo_item_capital.descripcion:
         caso.inversion.capital_trabajo_items.append(nuevo_item_capital)
 
+    manager.guardar_caso_actual() # Autosave
     return redirect(url_for('nuevo_caso', tab_name='inversion', sub_tab_name='capital'))
 
 
@@ -253,6 +289,7 @@ def guardar_proyeccion():
     datos_proyeccion.resultados_proyeccion = resultados
     caso.proyeccion = datos_proyeccion
     
+    manager.guardar_caso_actual() # Autosave
     return jsonify({
         'success': True, 
         'resultados': resultados,
@@ -298,11 +335,10 @@ def guardar_rol_cargo():
 
     except ValueError:
         abort(400, description="Datos numéricos inválidos en el formulario de Rol de Pagos.")
-    if not caso.rol_pagos.proyeccion_anual:
-        caso.rol_pagos.proyeccion_anual.append(AnioRolPagos())
     caso.rol_pagos.proyeccion_anual[0].items.append(nuevo_cargo)
     regenerar_proyeccion_rol(caso)
     
+    manager.guardar_caso_actual() # Autosave
     return redirect(url_for('nuevo_caso', tab_name='rol-pagos'))
 
 
@@ -359,6 +395,7 @@ def actualizar_financiamiento():
     data = request.get_json()
     caso.financiamiento.porcentaje_propio = float(data.get('propio', 75))
     caso.financiamiento.porcentaje_externo = 100 - caso.financiamiento.porcentaje_propio
+    manager.guardar_caso_actual() # Autosave
     return jsonify({
         'propio': caso.financiamiento.porcentaje_propio,
         'externo': caso.financiamiento.porcentaje_externo
@@ -374,9 +411,114 @@ def guardar_porcentaje():
         propio = float(data.get('propio', 75))
         caso.financiamiento.porcentaje_propio = propio
         caso.financiamiento.porcentaje_externo = 100 - propio
+        manager.guardar_caso_actual() # Autosave
         return jsonify({'success': True})
     except ValueError:
         return jsonify({'success': False}), 400
+
+
+@app.route('/api/wacc/anhadir-fila', methods=['POST'])
+def wacc_anhadir_fila():
+    caso = validar_caso_activo()
+    num_anos = caso.proyeccion.num_proyeccion
+    nombre_defecto = "Nueva Empresa"
+    
+    caso.wacc.tabla_utilidad.append(ItemWacc(nombre=nombre_defecto, valores_anuales=[0.0] * num_anos))
+    caso.wacc.tabla_patrimonio.append(ItemWacc(nombre=nombre_defecto, valores_anuales=[0.0] * num_anos))
+    
+    manager.guardar_caso_actual() # Autosave
+    return jsonify({'success': True})
+
+
+@app.route('/api/wacc/guardar-nombre', methods=['POST'])
+def wacc_guardar_nombre():
+    caso = validar_caso_activo()
+    data = request.json
+    idx, nuevo_nombre = data['fila'], data['valor']
+    
+    caso.wacc.tabla_utilidad[idx].nombre = nuevo_nombre
+    caso.wacc.tabla_patrimonio[idx].nombre = nuevo_nombre
+    manager.guardar_caso_actual() # Autosave
+    return jsonify({'success': True})
+
+
+@app.route('/api/wacc/guardar-celda', methods=['POST'])
+def wacc_guardar_celda():
+    caso = validar_caso_activo()
+    data = request.json
+    tipo, fila_idx, col_idx = data['tipo'], data['fila'], data['col']
+    valor = str(data['valor'])
+    
+    # Sincronización de nombres (columna 0)
+    if col_idx == 0:
+        if fila_idx < len(caso.wacc.tabla_utilidad):
+            caso.wacc.tabla_utilidad[fila_idx].nombre = valor
+        if fila_idx < len(caso.wacc.tabla_patrimonio):
+            caso.wacc.tabla_patrimonio[fila_idx].nombre = valor
+    else:
+        # Guardado de valores numéricos
+        target_table = caso.wacc.tabla_utilidad if tipo == 'utilidad' else caso.wacc.tabla_patrimonio
+        try:
+            val_float = float(valor.replace(',', ''))
+            target_table[fila_idx].valores_anuales[col_idx - 1] = val_float
+        except ValueError:
+            pass
+    return jsonify({'success': True})
+
+
+
+@app.route('/api/guardar-depreciacion-activo', methods=['POST'])
+def guardar_depreciacion_activo():
+    caso = validar_caso_activo()
+    try:
+        data = request.get_json()
+        idx = int(data.get('index', -1))
+        
+        if 0 <= idx < len(caso.inversion.activos_fijos):
+            activo = caso.inversion.activos_fijos[idx]
+            activo.dep_tipo = data.get('tipo', '')
+            activo.dep_porcentaje_residual = float(data.get('porcentaje_residual', 10.0))
+            activo.dep_monto_valor_residual_pct = float(data.get('monto_residual_pct', 100.0))
+            manager.guardar_caso_actual() # Autosave
+            return jsonify({'success': True})
+            
+    except ValueError:
+        pass
+        
+    return jsonify({'success': False}), 400
+
+
+@app.route('/api/guardar-amortizacion-diferida', methods=['POST'])
+def guardar_amortizacion_diferida():
+    caso = validar_caso_activo()
+    try:
+        data = request.get_json()
+        idx = int(data.get('index', -1))
+        anios = int(data.get('anios', 5))
+        
+        if 0 <= idx < len(caso.inversion.inversion_diferida):
+            item = caso.inversion.inversion_diferida[idx]
+            item.amort_anios = anios
+            manager.guardar_caso_actual() # Autosave
+            return jsonify({'success': True})
+            
+    except ValueError:
+        pass
+        
+    return jsonify({'success': False}), 400
+
+
+@app.route('/api/guardar-amortizacion', methods=['POST'])
+def guardar_amortizacion():
+    caso = manager.obtener_caso_actual()
+    data = request.get_json()
+    
+    caso.amortizacion.interes_anual = float(data.get('interes_anual', 0))
+    caso.amortizacion.institucion = data.get('institucion', "")
+    caso.amortizacion.anios = int(data.get('anios', 5))
+    
+    manager.guardar_caso_actual() # Autosave
+    return jsonify({'success': True})
 
         
 # -------------------------------------------------------------------

@@ -1,0 +1,118 @@
+{
+    "nombre": "Caso1",
+    "fecha_creacion": "2026-02-03T10:54:43.306820",
+    "filename": "caso1_20260203105443.json",
+    "proyeccion": {
+        "demanda_inicial": 51.0,
+        "tasa_crecimiento": 85.2,
+        "num_proyeccion": 5,
+        "resultados_proyeccion": [
+            51,
+            94,
+            175,
+            324,
+            600
+        ]
+    },
+    "inversion": {
+        "activos_fijos": [
+            {
+                "descripcion": "Camara",
+                "medidas": "3m * 5m",
+                "valor_unitario": 30.0,
+                "cantidad": 1,
+                "valor_total": 30.0,
+                "comentario": "Pago al inicio de cada a\u00f1o",
+                "costo": 30.0,
+                "dep_tipo": "Inmuebles",
+                "dep_porcentaje_residual": 10.0,
+                "dep_monto_valor_residual_pct": 100.0
+            }
+        ],
+        "inversion_diferida": [
+            {
+                "descripcion": "EJ2",
+                "costo": 66.0,
+                "valor_unitario": 22.0,
+                "cantidad": 3,
+                "total": 66.0,
+                "comentario": "",
+                "amort_anios": 5
+            },
+            {
+                "descripcion": "EJ3",
+                "costo": 20.0,
+                "valor_unitario": 5.0,
+                "cantidad": 4,
+                "total": 20.0,
+                "comentario": "",
+                "amort_anios": 9
+            }
+        ],
+        "capital_trabajo_items": [
+            {
+                "descripcion": "Consumo electrico",
+                "valor_unitario": 9.0,
+                "cantidad": 1,
+                "total": 9.0
+            }
+        ],
+        "analisis_energetico": [],
+        "capital_trabajo": 9.0,
+        "consumos_mensuales": [
+            {
+                "consumo_kwh": 0.09,
+                "costo_usd": 9.0
+            }
+        ],
+        "consumos_diarios": [
+            {
+                "consumo_diario": 0.07,
+                "anual": 25.55,
+                "costo_kwh": 0.012,
+                "total": 0.30660000000000004
+            }
+        ]
+    },
+    "rol_pagos": {
+        "num_proyeccion": 5,
+        "proyeccion_anual": [],
+        "gran_total_general": 0.0
+    },
+    "financiamiento": {
+        "porcentaje_propio": 0.0,
+        "porcentaje_externo": 100.0
+    },
+    "wacc": {
+        "tabla_utilidad": [
+            {
+                "nombre": "Nueva Empresa",
+                "valores_anuales": [
+                    50.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            }
+        ],
+        "tabla_patrimonio": [
+            {
+                "nombre": "Nueva Empresa",
+                "valores_anuales": [
+                    90.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            }
+        ],
+        "gran_total_general": 0.0
+    },
+    "amortizacion": {
+        "interes_anual": 0.0,
+        "institucion": "",
+        "anios": 1
+    }
+}

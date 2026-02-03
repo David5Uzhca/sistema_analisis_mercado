@@ -1,0 +1,117 @@
+<div class="amortizacion-container">
+    <h3>Tasa de Amortización</h3>
+
+    <div class="amortizacion-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+        <div class="form-group">
+            <label>Préstamo (Total Externo):</label>
+            <input type="text" id="prestamo-fijo" value="{{ "{:,.2f}".format(inversion_total_general(caso.inversion) * (caso.financiamiento.porcentaje_externo / 100)) }}" readonly style="background: #e9ecef;">
+        </div>
+        <div class="form-group">
+            <label>Institución:</label>
+            <input type="text" id="institucion" value="{{ caso.amortizacion.institucion }}" placeholder="Ej: JEP">
+        </div>
+        <div class="form-group">
+            <label>Interés Anual (%):</label>
+            <input type="number" id="interes-anual" value="{{ caso.amortizacion.interes_anual }}" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>Años:</label>
+            <input type="number" id="anios" value="{{ caso.amortizacion.anios }}" min="1">
+        </div>
+        <div class="form-group">
+            <label>Interés Mensual:</label>
+            <input type="text" id="interes-mensual" readonly style="background: #eee;">
+        </div>
+        <div class="form-group">
+            <label>Pagos Totales:</label>
+            <input type="text" id="pagos-totales" readonly style="background: #eee;">
+        </div>
+        <div class="form-group">
+            <label>Amortización Mensual:</label>
+            <input type="text" id="amortizacion-fija" readonly style="background: #eee;">
+        </div>
+    </div>
+
+    <hr>
+
+    <table id="tabla-amortizacion" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background: #fff3cd;">
+                <th>Meses</th>
+                <th>Capital</th>
+                <th>Tasa/12</th>
+                <th>Interés</th>
+                <th>Amortización</th>
+                <th>Pago</th>
+                <th>Deuda Final</th>
+            </tr>
+        </thead>
+        <tbody id="body-amortizacion">
+            </tbody>
+    </table>
+</div>
+
+
+<script>
+function calcularAmortizacion() {
+    const prestamo = parseFloat(document.getElementById('prestamo-fijo').value.replace(/,/g, '')) || 0;
+    const intAnual = parseFloat(document.getElementById('interes-anual').value) || 0;
+    const anios = parseInt(document.getElementById('anios').value) || 0;
+    
+    const pagos = anios * 12;
+    const intMensual = (intAnual / 100) / 12;
+    const amortizacionMensual = pagos > 0 ? (prestamo / pagos) : 0;
+
+    // Actualizar campos del formulario
+    document.getElementById('pagos-totales').value = pagos;
+    document.getElementById('interes-mensual').value = (intMensual * 100).toFixed(2) + '%';
+    document.getElementById('amortizacion-fija').value = amortizacionMensual.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+    const tbody = document.getElementById('body-amortizacion');
+    tbody.innerHTML = '';
+
+    let saldoCapital = prestamo;
+
+    for (let i = 1; i <= pagos; i++) {
+        let interesMes = saldoCapital * intMensual;
+        let pagoTotal = interesMes + amortizacionMensual;
+        let deudaFinal = saldoCapital - amortizacionMensual;
+
+        // Evitar residuos negativos por redondeo en el último mes
+        if (i === pagos) deudaFinal = 0;
+
+        const row = `
+            <tr>
+                <td style="text-align:center">${i}</td>
+                <td>$${saldoCapital.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align:center">${(intMensual * 100).toFixed(2)}%</td>
+                <td>$${interesMes.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>$${amortizacionMensual.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>$${pagoTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>$${Math.max(0, deudaFinal).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+        saldoCapital = deudaFinal;
+    }
+
+    // Guardado automático
+    fetch('/api/guardar-amortizacion', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            interes_anual: intAnual,
+            institucion: document.getElementById('institucion').value,
+            anios: anios
+        })
+    });
+}
+
+// Listeners para cambios automáticos
+document.getElementById('interes-anual').addEventListener('input', calcularAmortizacion);
+document.getElementById('anios').addEventListener('input', calcularAmortizacion);
+document.getElementById('institucion').addEventListener('blur', calcularAmortizacion);
+
+// Ejecutar al cargar
+window.onload = calcularAmortizacion;
+</script>

@@ -30,6 +30,11 @@ class ActivoFijo:
     comentario: str = ""    
     costo: float = 0.0    
     
+    # Nuevos campos para Depreciación
+    dep_tipo: str = "" 
+    dep_porcentaje_residual: float = 10.0
+    dep_monto_valor_residual_pct: float = 100.0
+    
     def calcular_total(self):
         self.valor_total = self.valor_unitario * self.cantidad
         self.costo = self.valor_total
@@ -44,6 +49,9 @@ class InversionDiferidaItem:
     cantidad: int = 0
     total: float = 0.0         
     comentario: str = ""
+    
+    # Nuevo campo para Amortización de Intangibles
+    amort_anios: int = 5
     
     def calcular_total(self):
         self.total = self.valor_unitario * self.cantidad
@@ -104,11 +112,15 @@ class DatosInversion:
 @dataclass
 class Caso:
     nombre: str
-    fecha_creacion: str = datetime.now().isoformat() 
+    fecha_creacion: str = datetime.now().isoformat()
+    filename: str = "" # Nombre del archivo físico persistente 
     proyeccion: DatosProyeccion = field(default_factory=DatosProyeccion)
     inversion: DatosInversion = field(default_factory=DatosInversion)
     rol_pagos: 'DatosRolPagos' = field(default_factory=lambda: DatosRolPagos())
     financiamiento: DatosFinanciamiento = field(default_factory=DatosFinanciamiento)
+    
+    wacc: 'DatosWacc' = field(default_factory=lambda: DatosWacc())
+    amortizacion: 'DatosAmortizacion' = field(default_factory=lambda: DatosAmortizacion())
 
 
 @dataclass
@@ -174,8 +186,29 @@ class AnioRolPagos:
     items: List[ItemRolPagos] = field(default_factory=list)
     total_anual: float = 0.0
 
+
 @dataclass
 class DatosRolPagos:
     num_proyeccion: int = 5 
     proyeccion_anual: List[AnioRolPagos] = field(default_factory=list)
     gran_total_general: float = 0.0
+
+
+@dataclass
+class ItemWacc:
+    nombre: str = ""
+    valores_anuales: List[float] = field(default_factory=list) # Para los años 2020-2024
+
+
+@dataclass
+class DatosWacc:
+    tabla_utilidad: List[ItemWacc] = field(default_factory=list)
+    tabla_patrimonio: List[ItemWacc] = field(default_factory=list)
+    gran_total_general: float = 0.0
+
+
+@dataclass
+class DatosAmortizacion:
+    interes_anual: float = 0.0
+    institucion: str = ""
+    anios: int = 5

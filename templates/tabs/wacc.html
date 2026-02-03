@@ -1,0 +1,161 @@
+<div class="wacc-container">
+    {% set tablas_entrada = [('UTILIDAD', 'utilidad', caso.wacc.tabla_utilidad), ('PATRIMONIO', 'patrimonio',
+    caso.wacc.tabla_patrimonio)] %}
+
+    {% for titulo, tipo, lista in tablas_entrada %}
+    <div class="wacc-section" style="margin-bottom: 30px;">
+        <h3 style="text-align: center; background: #f8f9fa; border: 1px solid #ddd; padding: 5px;">{{ titulo }}</h3>
+        <table class="table-wacc" data-tipo="{{ tipo }}" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #e9ecef;">
+                    <th style="width: 20%;">Nombre</th>
+                    {% set start_year = 2025 - caso.proyeccion.num_proyeccion + 1 %}
+                    {% for i in range(caso.proyeccion.num_proyeccion) %}
+                    <th>{{ start_year + i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in lista %}
+                {% set fila_idx = loop.index0 %}
+                <tr>
+                    <td {% if tipo=='utilidad' %} contenteditable="true" class="edit-cell name-cell" {% else %}
+                        class="locked-cell" style="background: #f0f0f0; color: #666;" {% endif %}
+                        data-fila="{{ fila_idx }}" data-col="0" style="border: 1px solid #ccc; padding: 8px;">
+                        {{ fila.nombre }}
+                    </td>
+                    {% for valor in fila.valores_anuales %}
+                    <td contenteditable="true" class="edit-cell blue-cell" data-fila="{{ fila_idx }}"
+                        data-col="{{ loop.index }}"
+                        style="border: 1px solid #ccc; padding: 8px; color: #0056b3; font-weight: bold; text-align: right;">
+                        {{ "{:,.2f}".format(valor) }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if tipo == 'utilidad' %}
+        <button onclick="anhadirFilaWacc()" class="btn-agregar" style="margin-top: 5px;">INSERTAR</button>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="wacc-section" style="margin-top: 30px;">
+        <h3 style="text-align: center; background: #f8f9fa; border: 1px solid #ddd; padding: 5px;">ROE</h3>
+        <table id="tabla-roe" style="width: 100%; border-collapse: collapse; text-align: right;">
+            <thead>
+                <tr style="background: #e9ecef;">
+                    <th style="width: 20%; text-align: left; padding-left: 10px;">Nombre</th>
+                    {% set start_year = 2025 - caso.proyeccion.num_proyeccion + 1 %}
+                    {% for i in range(caso.proyeccion.num_proyeccion) %}
+                    <th style="text-align: center;">{{ start_year + i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila_u in caso.wacc.tabla_utilidad %}
+                {% set idx = loop.index0 %}
+                {% set fila_p = caso.wacc.tabla_patrimonio[idx] %}
+                <tr>
+                    <td class="roe-name-{{ idx }}" style="border: 1px solid #ccc; padding: 8px; text-align: left;">{{
+                        fila_u.nombre }}</td>
+                    {% for i in range(caso.proyeccion.num_proyeccion) %}
+                    <td class="roe-calc-cell" data-col="{{ i }}"
+                        style="border: 1px solid #ccc; padding: 8px; background: #f8d7da;">
+                        {% if fila_p and fila_p.valores_anuales[i] != 0 %}
+                        {{ "{:,.3f}".format(fila_u.valores_anuales[i] / fila_p.valores_anuales[i]) }}
+                        {% else %} 0.000 {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+
+                <tr style="background: #f1f3f5;">
+                    <td style="border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold;">Promedio</td>
+                    {% for i in range(caso.proyeccion.num_proyeccion) %}
+                    <td class="col-promedio" data-col="{{ i }}"
+                        style="border: 1px solid #ccc; padding: 8px; font-weight: bold;">0.000</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="background: #fff3cd;">
+                    <td style="border: 1px solid #ccc; padding: 10px; text-align: left; font-weight: bold;">PROMEDIO
+                        FINAL</td>
+                    <td id="promedio-final" colspan="{{ caso.proyeccion.num_proyeccion }}"
+                        style="border: 1px solid #ccc; padding: 10px; font-weight: bold; text-align: center; font-size: 1.2em;">
+                        0.000</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('blur', function (event) {
+        const cell = event.target;
+        if (cell.classList.contains('edit-cell')) {
+            const isName = cell.classList.contains('name-cell');
+            let valorRaw = cell.innerText.trim();
+
+            let url = '/api/wacc/guardar-celda';
+            let payload = { tipo: cell.closest('.table-wacc').dataset.tipo, fila: parseInt(cell.dataset.fila), col: parseInt(cell.dataset.col), valor: valorRaw };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                if (isName) {
+                    const idx = cell.dataset.fila;
+                    document.querySelectorAll(`.locked-cell[data-fila="${idx}"], .roe-name-${idx}`).forEach(td => td.innerText = valorRaw);
+                } else {
+                    location.reload();
+                }
+            });
+        }
+    }, true);
+
+    function anhadirFilaWacc() {
+        fetch('/api/wacc/anhadir-fila', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: 'utilidad' })
+        }).then(() => location.reload());
+    }
+
+    function calcularTotalesROE() {
+        const numCols = Number('{{ caso.proyeccion.num_proyeccion }}');
+        let promediosVerticales = [];
+
+        for (let i = 0; i < numCols; i++) {
+            let sumaCol = 0;
+            let contadorFilasRojo = 0;
+
+            const celdasCalculadas = document.querySelectorAll(`.roe-calc-cell[data-col="${i}"]`);
+            celdasCalculadas.forEach(td => {
+                let val = parseFloat(td.innerText.replace(/,/g, ''));
+                if (!isNaN(val)) {
+                    sumaCol += val;
+                    contadorFilasRojo++;
+                }
+            });
+
+            // El promedio ahora se divide solo por el número de empresas (celdas rojas)
+            const promedioCol = contadorFilasRojo > 0 ? (sumaCol / contadorFilasRojo) : 0;
+
+            document.querySelector(`.col-promedio[data-col="${i}"]`).innerText = promedioCol.toFixed(3);
+            promediosVerticales.push(promedioCol);
+        }
+
+        // Promedio Final (Horizontal de la fila de promedios)
+        const promedioFinal = promediosVerticales.length > 0 ?
+            (promediosVerticales.reduce((a, b) => a + b, 0) / promediosVerticales.length) : 0;
+
+        document.getElementById('promedio-final').innerText = promedioFinal.toFixed(3);
+    }
+
+    window.onload = calcularTotalesROE;
+</script>

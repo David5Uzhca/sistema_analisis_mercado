@@ -1,0 +1,430 @@
+<div class="depreciacion-container">
+    <h3 style="background: orange; color: black; padding: 5px; margin-bottom: 0;">DEPRECIACIONES</h3>
+    <div style="overflow-x: auto;">
+        <table class="table-depreciacion"
+            style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+                <tr style="background: #e9ecef; font-weight: bold;">
+                    <th style="border: 1px solid #ccc; padding: 5px; min-width: 150px;">INVERSION</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR RESIDUAL</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">PORCENTAJE</th>
+                    <th style="border: 1px solid #ccc; padding: 5px; min-width: 120px;">TIPO</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR DEL BIEN - VALOR RESIDUAL</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">MONTO VALOR RESIDUAL</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">% DEP</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">AÑOS DE DEP</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR DEP</th>
+                    <!-- Years 1 to 20 -->
+                    {% for i in range(1, 21) %}
+                    <th style="border: 1px solid #ccc; padding: 5px; min-width: 40px;">{{ i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for activo in caso.inversion.activos_fijos %}
+                <tr data-index="{{ loop.index0 }}" data-valor="{{ activo.valor_total }}">
+                    <!-- INVERSION -->
+                    <td style="border: 1px solid #ccc; padding: 5px; text-align: left;">{{ activo.descripcion }}</td>
+
+                    <!-- VALOR -->
+                    <td style="border: 1px solid #ccc; padding: 5px;">{{ "{:,.2f}".format(activo.valor_total) }}</td>
+
+                    <!-- VALOR RESIDUAL (Calculado) -->
+                    <td class="col-valor-residual" style="border: 1px solid #ccc; padding: 5px;">0.00</td>
+
+                    <!-- PORCENTAJE (Editable) -->
+                    <td contenteditable="true" class="edit-dep col-porcentaje"
+                        style="border: 1px solid #ccc; padding: 5px; background: #fffbe6;">
+                        {{ activo.dep_porcentaje_residual }}%
+                    </td>
+
+                    <!-- TIPO (Select) -->
+                    <td style="border: 1px solid #ccc; padding: 5px;">
+                        <select class="dep-tipo-select"
+                            style="width: 100%; border: 1px solid #ccc; padding: 4px; border-radius: 4px;"
+                            onchange="actualizarFila(this.closest('tr'), true)">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="Inmuebles" {% if activo.dep_tipo=='Inmuebles' %}selected{% endif %}>Inmuebles
+                            </option>
+                            <option value="Instalaciones" {% if activo.dep_tipo=='Instalaciones' %}selected{% endif %}>
+                                Instalaciones</option>
+                            <option value="Vehiculos" {% if activo.dep_tipo=='Vehiculos' %}selected{% endif %}>Vehiculos
+                            </option>
+                            <option value="Equipos" {% if activo.dep_tipo=='Equipos' %}selected{% endif %}>Equipos de
+                                computo</option>
+                        </select>
+                    </td>
+
+                    <!-- VALOR DEL BIEN - VALOR RESIDUAL -->
+                    <td class="col-base-depreciable" style="border: 1px solid #ccc; padding: 5px;">0.00</td>
+
+                    <!-- MONTO VALOR RESIDUAL (Editable) -->
+                    <td contenteditable="true" class="edit-dep col-monto-pct"
+                        style="border: 1px solid #ccc; padding: 5px; background: #fffbe6;">
+                        {{ activo.dep_monto_valor_residual_pct }}%
+                    </td>
+
+                    <!-- % DEP (Auto) -->
+                    <td class="col-pct-dep" style="border: 1px solid #ccc; padding: 5px;">0%</td>
+
+                    <!-- AÑOS DE DEP (Auto) -->
+                    <td class="col-anos-dep" style="border: 1px solid #ccc; padding: 5px;">0</td>
+
+                    <!-- VALOR DEP (Auto) -->
+                    <td class="col-valor-dep" style="border: 1px solid #ccc; padding: 5px; font-weight: bold;">0.00</td>
+
+                    <!-- Years Columns -->
+                    {% for i in range(1, 21) %}
+                    <td class="col-year year-{{ i }}" style="border: 1px solid #ccc; padding: 5px; color: #666;"></td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+                <!-- TOTALES -->
+                <tr style="background: #f8f9fa; font-weight: bold;">
+                    <td colspan="9" style="border: 1px solid #ccc; padding: 8px; text-align: right;">Totales</td>
+                    <td id="total-valor-dep" style="border: 1px solid #ccc; padding: 8px;">0.00</td>
+                    {% for i in range(1, 21) %}
+                    <td id="total-year-{{ i }}" style="border: 1px solid #ccc; padding: 8px;">0.00</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="amortizacion-container" style="margin-top: 40px;">
+    <h3 style="background: orange; color: black; padding: 5px; margin-bottom: 0;">AMORTIZACIONES</h3>
+    <div style="overflow-x: auto;">
+        <table class="table-amortizacion"
+            style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+                <tr style="background: #e9ecef; font-weight: bold;">
+                    <th style="border: 1px solid #ccc; padding: 5px; min-width: 150px;">INVERSION</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">NUM DE AMORTIZACION (AÑOS)</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">PORCENTAJE</th>
+                    <th style="border: 1px solid #ccc; padding: 5px;">VALOR AMORTIZACION</th>
+                    <!-- Years 1 to 20 (Visibility controlled by JS) -->
+                    {% for i in range(1, 21) %}
+                    <th class="amort-col-header-{{ i }}" style="border: 1px solid #ccc; padding: 5px; min-width: 40px;">
+                        {{ i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in caso.inversion.inversion_diferida %}
+                <tr data-index="{{ loop.index0 }}" data-valor="{{ item.total }}" class="row-amort">
+                    <!-- INVERSION -->
+                    <td style="border: 1px solid #ccc; padding: 5px; text-align: left;">{{ item.descripcion }}</td>
+
+                    <!-- VALOR -->
+                    <td style="border: 1px solid #ccc; padding: 5px;">{{ "{:,.2f}".format(item.total) }}</td>
+
+                    <!-- NUM DE AMORTIZACION (Editable) -->
+                    <td contenteditable="true" class="edit-amort col-anios"
+                        style="border: 1px solid #ccc; padding: 5px; background: #fffbe6;">
+                        {{ item.amort_anios }}
+                    </td>
+
+                    <!-- PORCENTAJE (Auto) -->
+                    <td class="col-pct" style="border: 1px solid #ccc; padding: 5px;">0.00%</td>
+
+                    <!-- VALOR AMORTIZACION (Auto) -->
+                    <td class="col-val-amort" style="border: 1px solid #ccc; padding: 5px;">0.00</td>
+
+                    <!-- Years Columns -->
+                    {% for i in range(1, 21) %}
+                    <td class="col-year-amort year-amort-{{ i }}"
+                        style="border: 1px solid #ccc; padding: 5px; color: #666;"></td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+                <!-- TOTALES -->
+                <tr style="background: #f8f9fa; font-weight: bold;">
+                    <td colspan="4" style="border: 1px solid #ccc; padding: 8px; text-align: right;">Total</td>
+                    <td id="total-val-amort" style="border: 1px solid #ccc; padding: 8px;">0.00</td>
+                    {% for i in range(1, 21) %}
+                    <td id="total-year-amort-{{ i }}" class="total-amort-col-{{ i }}"
+                        style="border: 1px solid #ccc; padding: 8px;">0.00</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const CONFIG_DEP = {
+        'Inmuebles': { pct: 5, anos: 20 },
+        'Instalaciones': { pct: 10, anos: 10 },
+        'Vehiculos': { pct: 20, anos: 5 },
+        'Equipos': { pct: 33, anos: 3 }
+    };
+
+    // Variable global inyectada desde Jinja - NO LONGER USED FOR LIMITING COLUMNS, only logic if needed
+    // const NUM_PROYECCION = {{ caso.proyeccion.num_proyeccion }};
+    const MAX_RENDER_COLS = 20;
+
+    function parsePercent(str) {
+        return parseFloat(str.replace('%', '')) || 0;
+    }
+
+    function actualizarFila(tr, save = false) {
+        const valorTotal = parseFloat(tr.dataset.valor);
+        const tipo = tr.querySelector('.dep-tipo-select').value;
+        const pctResidual = parsePercent(tr.querySelector('.col-porcentaje').innerText);
+        const montoPct = parsePercent(tr.querySelector('.col-monto-pct').innerText);
+
+        // 1. Calcular Valor Residual
+        const valorResidual = valorTotal * (pctResidual / 100);
+        tr.querySelector('.col-valor-residual').innerText = valorResidual.toFixed(2);
+
+        // 2. Base Depreciable (Valor - Valor Residual)
+        const baseDepreciable = valorTotal - valorResidual;
+        tr.querySelector('.col-base-depreciable').innerText = baseDepreciable.toFixed(2);
+
+        // 3. Configurar Tipo (% Dep y Años)
+        let pctDep = 0;
+        let anosDep = 0;
+
+        if (CONFIG_DEP[tipo]) {
+            pctDep = CONFIG_DEP[tipo].pct;
+            anosDep = CONFIG_DEP[tipo].anos;
+        }
+
+        tr.querySelector('.col-pct-dep').innerText = pctDep + '%';
+        tr.querySelector('.col-anos-dep').innerText = anosDep;
+
+        // 4. Calcular Valor de Depreciación Anual
+        let valorDep = 0;
+        if (anosDep > 0) {
+            valorDep = (baseDepreciable * (montoPct / 100)) / anosDep;
+        }
+        tr.querySelector('.col-valor-dep').innerText = valorDep.toFixed(2);
+
+        // 5. Rellenar columnas de años
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const td = tr.querySelector(`.year-${i}`);
+            if (td) {
+                if (i <= anosDep) {
+                    td.innerText = valorDep.toFixed(2);
+                } else {
+                    td.innerText = "";
+                }
+            }
+        }
+
+        calcularTotales();
+        updateTableVisibility(); // Check if resizing is needed
+
+        if (save) {
+            guardarCambios(tr);
+        }
+    }
+
+    function calcularTotales() {
+        let totalValorDep = 0;
+        const totalsYears = new Array(MAX_RENDER_COLS + 1).fill(0);
+
+        document.querySelectorAll('tbody tr[data-index]').forEach(tr => {
+            if (tr.classList.contains('row-amort')) return; // ignorar amort rows
+
+            // Sumar Valor Dep Column
+            const valDep = parseFloat(tr.querySelector('.col-valor-dep').innerText) || 0;
+            totalValorDep += valDep;
+
+            // Sumar Years
+            for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+                const cell = tr.querySelector(`.year-${i}`);
+                if (cell) {
+                    const val = parseFloat(cell.innerText) || 0;
+                    totalsYears[i] += val;
+                }
+            }
+        });
+
+        document.getElementById('total-valor-dep').innerText = totalValorDep.toFixed(2);
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const td = document.getElementById(`total-year-${i}`);
+            if (td) td.innerText = totalsYears[i].toFixed(2);
+        }
+    }
+
+    function guardarCambios(tr) {
+        const index = tr.dataset.index;
+        const tipo = tr.querySelector('.dep-tipo-select').value;
+        const pctResidual = parsePercent(tr.querySelector('.col-porcentaje').innerText);
+        const montoPct = parsePercent(tr.querySelector('.col-monto-pct').innerText);
+
+        fetch('/api/guardar-depreciacion-activo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                index: index,
+                tipo: tipo,
+                porcentaje_residual: pctResidual,
+                monto_residual_pct: montoPct
+            })
+        });
+    }
+
+    // Listeners para celdas editables
+    document.querySelectorAll('.edit-dep').forEach(cell => {
+        cell.addEventListener('blur', function () {
+            actualizarFila(this.closest('tr'), true);
+        });
+
+        // Formatear al entrar (quitar %)
+        cell.addEventListener('focus', function () {
+            this.innerText = this.innerText.replace('%', '').trim();
+        });
+    });
+
+    // Iniciar calculo al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('tbody tr[data-index]').forEach(tr => {
+            if (tr.classList.contains('row-amort')) {
+                actualizarFilaAmort(tr, false);
+            } else {
+                actualizarFila(tr, false);
+            }
+        });
+        updateTableVisibility();
+    });
+
+    // --- VISIBILITY LOGIC (Dynamic Columns) ---
+    function updateTableVisibility() {
+        // 1. Calcular Max Años Depreciacion
+        let maxDepYears = 0;
+        document.querySelectorAll('tbody tr[data-index]').forEach(tr => {
+            if (!tr.classList.contains('row-amort')) {
+                const anos = parseFloat(tr.querySelector('.col-anos-dep').innerText) || 0;
+                if (anos > maxDepYears) maxDepYears = anos;
+            }
+        });
+        // Minimo mostrar 1 año si hay datos, o 20 si es lo standard, pero usuario pidio dinamico
+        if (maxDepYears === 0) maxDepYears = 5; // Default view if empty
+        if (maxDepYears > MAX_RENDER_COLS) maxDepYears = MAX_RENDER_COLS;
+
+        // Toggle Dep Columns
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const display = i <= maxDepYears ? '' : 'none';
+            // Header
+            const th = document.querySelector(`.dep-col-header-${i}`);
+            if (th) th.style.display = display;
+            // Body Cells (Wait, Dep cells don't have unique dep-year class, they are year-i)
+            // But Amort has year-amort-i. So year-i is Dep only. Correct.
+            document.querySelectorAll(`.year-${i}`).forEach(td => td.style.display = display);
+            // Total Cell
+            const totalTd = document.querySelector(`.total-dep-col-${i}`);
+            if (totalTd) totalTd.style.display = display; // Need to ensure Total row has this class?
+            // Ah, previous step attempt to add class failed. Let's fix that.
+            const totalDepCell = document.getElementById(`total-year-${i}`);
+            if (totalDepCell) totalDepCell.style.display = display;
+        }
+
+        // 2. Calcular Max Años Amortizacion
+        let maxAmortYears = 0;
+        document.querySelectorAll('tr.row-amort').forEach(tr => {
+            const anos = parseFloat(tr.querySelector('.col-anios').innerText) || 0;
+            if (anos > maxAmortYears) maxAmortYears = anos;
+        });
+        if (maxAmortYears === 0) maxAmortYears = 5; // Default view if empty
+        if (maxAmortYears > MAX_RENDER_COLS) maxAmortYears = MAX_RENDER_COLS;
+
+        // Toggle Amort Columns
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const display = i <= maxAmortYears ? '' : 'none';
+            // Header
+            const th = document.querySelector(`.amort-col-header-${i}`);
+            if (th) th.style.display = display;
+            // Body Cells
+            document.querySelectorAll(`.year-amort-${i}`).forEach(td => td.style.display = display);
+            // Total Cell
+            const totalAmortCell = document.getElementById(`total-year-amort-${i}`);
+            if (totalAmortCell) totalAmortCell.style.display = display;
+        }
+    }
+
+    // --- AMORTIZACION LOGIC ---
+
+    function actualizarFilaAmort(tr, save = false) {
+        const valorTotal = parseFloat(tr.dataset.valor);
+        let anios = parseFloat(tr.querySelector('.col-anios').innerText) || 0;
+
+        // Evitar division por cero
+        if (anios <= 0) anios = 1;
+
+        // 1. Calcular Valor Amortizacion
+        const valorAmort = valorTotal / anios;
+        tr.querySelector('.col-val-amort').innerText = valorAmort.toFixed(2);
+
+        // 2. Porcentaje
+        const pct = (valorAmort / valorTotal) * 100;
+        tr.querySelector('.col-pct').innerText = pct.toFixed(2) + '%';
+
+        // 3. Rellenar columnas
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const td = tr.querySelector(`.year-amort-${i}`);
+            if (td) {
+                if (i <= anios) {
+                    td.innerText = valorAmort.toFixed(2);
+                } else {
+                    td.innerText = "";
+                }
+            }
+        }
+
+        calcularTotalesAmort();
+        updateTableVisibility(); // Check if resizing is needed
+
+        if (save) {
+            guardarCambiosAmort(tr);
+        }
+    }
+
+    function calcularTotalesAmort() {
+        let totalValAmort = 0;
+        const totalsYears = new Array(MAX_RENDER_COLS + 1).fill(0);
+
+        document.querySelectorAll('tr.row-amort').forEach(tr => {
+            const val = parseFloat(tr.querySelector('.col-val-amort').innerText) || 0;
+            totalValAmort += val;
+
+            for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+                const cell = tr.querySelector(`.year-amort-${i}`);
+                if (cell) {
+                    const v = parseFloat(cell.innerText) || 0;
+                    totalsYears[i] += v;
+                }
+            }
+        });
+
+        document.getElementById('total-val-amort').innerText = totalValAmort.toFixed(2);
+        for (let i = 1; i <= MAX_RENDER_COLS; i++) {
+            const td = document.getElementById(`total-year-amort-${i}`);
+            if (td) td.innerText = totalsYears[i].toFixed(2);
+        }
+    }
+
+    function guardarCambiosAmort(tr) {
+        const index = tr.dataset.index;
+        const anios = parseFloat(tr.querySelector('.col-anios').innerText) || 0;
+
+        fetch('/api/guardar-amortizacion-diferida', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index: index, anios: anios })
+        });
+    }
+
+    document.querySelectorAll('.edit-amort').forEach(cell => {
+        cell.addEventListener('blur', function () {
+            actualizarFilaAmort(this.closest('tr'), true);
+        });
+    });
+
+</script>

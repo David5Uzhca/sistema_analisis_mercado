@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes | mercuriOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .report-list {
+            list-style: none;
+            padding: 0;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .report-item {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .report-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .report-date {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .btn-load {
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .btn-load:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>mercuriOS</h1>
+        <nav>
+            <a href="{{ url_for('nuevo_caso') }}">Nuevo Caso</a> |
+            <a href="{{ url_for('reporte') }}" class="active">Reporte</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2 style="text-align: center;">Casos Guardados</h2>
+
+        {% if casos %}
+        <ul class="report-list">
+            {% for archivo in casos %}
+            <li class="report-item">
+                <div class="report-info">
+                    <span class="report-name">{{ archivo }}</span>
+                    <span class="report-date">Archivo de proyecto</span>
+                </div>
+                <!-- Extraemos el nombre del archivo para la ruta -->
+                <a href="{{ url_for('cargar_caso', filename=archivo) }}" class="btn-load">Cargar Proyecto</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="text-align: center; color: #666;">No existen proyectos guardados en el historial.</p>
+        {% endif %}
+    </main>
+</body>
+
+</html>

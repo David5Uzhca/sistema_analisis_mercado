@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nuevo Caso | mercuriOS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <header>
         <h1>mercuriOS</h1>
@@ -13,52 +15,71 @@
 
     <main>
         {% if session.get('needs_name') or not caso %}
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <h3>Iniciar Nuevo Caso</h3>
-                    <p>Asigne un nombre a este estudio para guardar su progreso.</p>
-                    <form action="{{ url_for('iniciar_caso') }}" method="post">
-                        <input type="text" name="nombre_caso" placeholder="Ej. Proyecto Paneles Digitales" required>
-                        <button type="submit">Comenzar Análisis</button>
-                    </form>
-                </div>
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h3>Iniciar Nuevo Caso</h3>
+                <p>Asigne un nombre a este estudio para guardar su progreso.</p>
+                <form action="{{ url_for('iniciar_caso') }}" method="post">
+                    <input type="text" name="nombre_caso" placeholder="Ej. Proyecto Paneles Digitales" required>
+                    <div class="form-actions" style="display: flex; gap: 15px; margin-top: 20px;">
+                        <button type="submit"
+                            style="flex: 1; padding: 10px; border-radius: 5px; border: none; background-color: #007bff; color: white; font-weight: bold; cursor: pointer; transition: background 0.3s; height: 40px;">Comenzar
+                            Análisis</button>
+                        <a href="{{ url_for('cerrar_caso') }}" style="flex: 1; text-decoration: none;">
+                            <button type="button"
+                                style="width: 100%; height: 40px; padding: 0 10px; border-radius: 5px; border: 1px solid #ccc; background-color: white; color: #555; font-weight: bold; cursor: pointer; transition: all 0.3s;">Cancelar</button>
+                        </a>
+                    </div>
+                </form>
+                </form>
             </div>
+        </div>
         {% else %}
         <header class="caso-header">
-                <h2>Caso Actual: {{ caso.nombre }}</h2>
-                <p>Fecha de Creación: {{ caso.fecha_creacion }}</p>
-                <button onclick="alert('Funcionalidad de guardar y descargar pendiente.')">Terminar caso</button>
-            </header>
-
-            <nav class="tab-nav">
-                {% for label, slug in tabs %}
-                    <a href="{{ url_for('nuevo_caso', tab_name=slug) }}">
-                        <button class="{% if active_tab == slug %}active{% endif %}">
-                            {{ label }}
-                        </button>
-                    </a>
-                {% endfor %}
-            </nav>
-
-            <hr>
-            
-            <div class="tab-content">
-                {% if active_tab == 'proyeccion' %}
-                    {% include 'tabs/proyeccion.html' %} 
-                {% elif active_tab == 'inversion' %}
-                    {% include 'tabs/inversion.html' %}
-                {% elif active_tab == 'financiamiento' %}
-                    {% include 'tabs/financiamiento.html' %}
-                {% elif active_tab == 'rol-pagos' %}
-                    {% include 'tabs/rol-pagos.html' %}
-                {% else %}
-                    <h2>Pestaña {{ active_tab | replace('-', ' ') | title }}</h2>
-                    <p>Contenido de la pestaña {{ active_tab }}</p>
-                {% endif %}
+            <h2>Caso Actual: {{ caso.nombre }}</h2>
+            <p>Fecha de Creación: {{ caso.fecha_creacion }}</p>
+            <div class="header-actions">
+                <a href="{{ url_for('cerrar_caso') }}"
+                    style="background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px;">Salir</a>
             </div>
+        </header>
+
+        <nav class="tab-nav">
+            {% for label, slug in tabs %}
+            <a href="{{ url_for('nuevo_caso', tab_name=slug) }}">
+                <button class="{% if active_tab == slug %}active{% endif %}">
+                    {{ label }}
+                </button>
+            </a>
+            {% endfor %}
+        </nav>
+
+        <hr>
+
+        <div class="tab-content">
+            {% if active_tab == 'proyeccion' %}
+            {% include 'tabs/proyeccion.html' %}
+            {% elif active_tab == 'inversion' %}
+            {% include 'tabs/inversion.html' %}
+            {% elif active_tab == 'financiamiento' %}
+            {% include 'tabs/financiamiento.html' %}
+            {% elif active_tab == 'tasa-amortizacion' %}
+            {% include 'tabs/tasa-amortizacion.html' %}
+            {% elif active_tab == 'depreciacion-amortizacion' %}
+            {% include 'tabs/depreciacion-amortizacion.html' %}
+            {% elif active_tab == 'rol-pagos' %}
+            {% include 'tabs/rol-pagos.html' %}
+            {% elif active_tab == 'wacc' %}
+            {% include 'tabs/wacc.html' %}
+            {% else %}
+            <h2>Pestaña {{ active_tab | replace('-', ' ') | title }}</h2>
+            <p>Contenido de la pestaña {{ active_tab }}</p>
+            {% endif %}
+        </div>
 
         {% endif %}
 
     </main>
 </body>
+
 </html>
